@@ -10,7 +10,7 @@ use Sub::Retry;
 use IO::File;
 use Time::HiRes;
 
-# IF it's provate user when require user id and password.
+# IF it's private user when require user id and password.
 #
 my $wassr = WWW::Wassr->new(
 #  user   => 'your username on wassr',
