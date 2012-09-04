@@ -293,6 +293,16 @@ sub private_timeline
   return $self->_private_parse($pdata);
 }
 
+sub user_photo {
+  my $self    = shift;
+  my %args    = @_;
+  my $user_id = $args{user_id} || '';
+  my $page    = $args{page} || 1;
+  croak "required user_id" if ( !defined $user_id or $user_id eq '' );
+  my $data = $self->{'wm'}->get("$self->{site_root}/user/$user_id/photos?page=$page");
+  return $self->_photo_parse($data);
+}
+
 #===parse===
 sub _CSRFPROTECT_parse {
   my $self = shift;
@@ -562,7 +572,7 @@ sub _private_parse
     $line->{message} = $result->{message}->[$_];
     my $messagefoot = $result->{messagefoot}->[$_];
     $messagefoot =~
-s{^\s+by\s+<a href="$result->{id}->[$_]">$result->{name}->[$_]</a>\s+at\s+}{};
+s{^\s+by\s+<a href="$result->{id}->[$_]">$result->{name}->[$_]</a>\s+at\s+}{}; #"
     $line->{ymdhms} = $messagefoot;
     push @$time_line, $line;
   }
@@ -594,6 +604,30 @@ sub _todo_parse
   }
   return $tlist;
 }
+
+sub _photo_parse {
+  my $self    = shift;
+  my $html    = shift->decoded_content();
+  my $scraper = scraper {
+    process '//div[@class="PhotosContainer"]/div[@class="TB_MessageContainer"]', 'data[]' => scraper {
+      process '//a', 'status_path[]' => '@href';
+      process '//a', message    => '@title';
+    };
+  };
+  my $result = $scraper->scrape($html);
+  return if !$result or ref $result ne 'HASH';
+  my $data   = $result->{data};
+  return if !$data   or ref $data   ne 'ARRAY';
+
+  for my $line (@$data) {
+    #postそのものにurlが含まれるとそっちを拾ってくるので、最後のリンクを指定する
+    my $status_url = $line->{status_path}->[-1];
+    $line->{image_path} = $status_url . '/photo';
+    $line->{status_id} = [split m{/}, $status_url]->[-1];
+  }
+  return $data;
+}
+
 
 #===act===
 sub update
