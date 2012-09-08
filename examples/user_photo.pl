@@ -9,19 +9,46 @@ use WWW::Wassr;
 use Sub::Retry;
 use IO::File;
 use Time::HiRes;
+use Getopt::Long;
 
-# IF it's private user when require user id and password.
-#
-my $wassr = WWW::Wassr->new(
-#  user   => 'your username on wassr',
-#  passwd => 'your password on wassr',
+sub usage {
+    my $usage = <<"END_USAGE";
+Usage: $0 [-u username] [-p password] target_user_id
+Options:
+    -u/--user:     your username on wassr
+    -p/--password: your password on wassr
+
+it is required usernme and password to take private user's photos.
+
+END_USAGE
+
+    return $usage;
+}
+
+die usage() if (scalar @ARGV == 0);
+
+my $user;
+my $password;
+
+GetOptions(
+    'user=s'     => \$user,
+    'password=s' => \$password
 );
-#
-#$wassr->login();
+
+my $target_user_id = $ARGV[0];
+
+my $wassr;
+if (defined($user) && defined($password)) {
+    $wassr = WWW::Wassr->new(
+        user   => $user,
+        passwd => $password
+    );
+    $wassr->login();
+} else {
+    $wassr = WWW::Wassr->new();
+}
 
 my $page = 1;
-my $target_user_id = 'likkradyus';
-
 while(1){
   my $tl =
     retry 1, 1, sub {
