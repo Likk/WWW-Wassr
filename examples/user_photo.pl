@@ -67,7 +67,7 @@ while(1){
     my $io = IO::File->new($line->{status_id}. '.jpg', 'w');
     $io->print($binary);
     $io->close;
-    Time::HiRes::usleep(100000);
+    Time::HiRes::usleep(1000000 + int(rand(3000000)));
   }
   $page++;
 }
