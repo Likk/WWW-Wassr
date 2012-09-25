@@ -72,6 +72,6 @@ zipファイルが落ちてくるので、解凍してどこかに置く。日�
 たとえば、`C:\wassr-photo`を作った場合には
 
     cd C:\wassr-photo
-    C:\WWW-Wassr\examples\user_photo.pl -u あなたのID -u あなたのパスワード PhotoをダウンロードしたいユーザのID
+    C:\WWW-Wassr\examples\user_photo.pl -u あなたのID -p あなたのパスワード PhotoをダウンロードしたいユーザのID
 
 でリターンを押せば、`C:\wassr-photo`に写真がダウンロードされるはずだ。
