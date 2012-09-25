@@ -226,6 +226,14 @@ sub channel_timeline
   return $self->_channel_parse($data);
 }
 
+sub channel_message {
+  my $self       = shift;
+  my %args       = @_;
+  my $page = $args{page} || 1;
+  my $data = $self->{'wm'}->get("$self->{site_root}/channel_message/?page=$page&ajax_response=0");
+  return $self->_channel_message_parse($data);
+}
+
 sub reply_timeline
 {
   my $self   = shift;
@@ -406,6 +414,38 @@ sub _channel_parse
     push @$time_line, $line;
   }
   return $time_line;
+}
+
+sub _channel_message_parse {
+  my $self    = shift;
+  my $data    = shift;
+  #warn $data->decoded_content();
+  my $scraper = scraper {
+    process '//div[@id="EntryMessages"]/div[@class="OneMsg channelMsg xfolkentry"]', 'data[]' => scraper {
+      process '//p[@class="message description"]', description  => 'HTML';
+      process '//a[@class="channelname"]',         channel_id   => '@href';
+      process '//span[@class="message_body"]',     message      => 'TEXT';
+      process '//span[@class="res"]/a',            reply_status => '@href';
+      process '//a[@class="MsgUserName"]',         id           => '@href',
+                                                   name         => 'TEXT';
+      process '//a[@class="MsgDateTime"]',         ymdhms       => 'TEXT',
+                                                   status       => '@href';
+      result qw/status id channel_id name message reply_status ymdhms description/
+    };
+    result 'data';
+  };
+  my $result = $scraper->scrape( $data->decoded_content());
+
+  for my $line_wk (@$result){
+    $line_wk->{channel_id}   = [ split m{/}, $line_wk->{channel_id}   ]->[-1];
+    $line_wk->{status}       = [ split m{/}, $line_wk->{status}       ]->[-1];
+    $line_wk->{id}           = [ split m{/}, $line_wk->{id}           ]->[2];
+    if($line_wk->{reply_status}){
+      $line_wk->{reply_status} = [ split m{/}, $line_wk->{reply_status} ]->[-1];
+    }
+  }
+  return $result;
+
 }
 
 sub _get_reply_num
