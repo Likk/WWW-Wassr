@@ -205,6 +205,14 @@ sub user_favorites {
   return $self->_parse($data);
 }
 
+sub channel_list {
+  my $self = shift;
+  my %args    = @_;
+  my $page    = $args{page} || 1;
+  my $data = $self->{'wm'}->get("$self->{site_root}/channel/?page=$page&ajax_response=0");
+  return $self->_channel_list_parse($data);
+}
+
 sub channel_timeline
 {
   my $self       = shift;
@@ -355,6 +363,20 @@ sub _parse
     }
   }
   return $timelines;
+}
+
+sub _channel_list_parse {
+  my $self    = shift;
+  my $data    = shift;
+  my $scraper = scraper {
+    process '//div[@id="ChannelIndex"]/div[@class="OneChannel"]/p[@class="channel-title"]/a', 'urls[]' => '@href';
+    result qw/urls/;
+  };
+  my $result    = $scraper->scrape($data->decoded_content());
+  for (@$result){
+    $_ = [split m{/}, $_]->[-1];
+  }
+  return $result;
 }
 
 sub _channel_parse
